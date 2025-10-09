@@ -599,8 +599,8 @@ packages:
   requires_python: '>=3.9,<3.13'
 - pypi: ./
   name: genoray-cli
-  version: 0.1.0
-  sha256: d92e3195943936f36bb161a1469ef5615696138948fc81ba84bcfb8b116e31ee
+  version: 0.0.0
+  sha256: b4c947d3fcdbe019bf00a19e26d110b11883b02b36f81b521ff8a1db816a9575
   requires_dist:
   - genoray
   - cyclopts
