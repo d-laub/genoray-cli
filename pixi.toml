@@ -24,6 +24,8 @@ publish = """
 python = ">=3.9,<3.13"
 cyclopts = "*"
 uv = "*"
+pre-commit = "*"
+commitizen = "*"
 
 [pypi-dependencies]
 genoray-cli = { path = ".", editable = true }
