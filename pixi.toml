@@ -6,11 +6,24 @@ platforms = ["linux-64"]
 version = "0.1.0"
 
 [tasks]
-publish = "rm -rf dist && uv publish"
+publish = """
+    git checkout main
+    && cz bump
+    && git push --follow-tags
+    && rm -rf dist
+    && uv build
+    && uv publish
+    && git checkout stable
+    && git pull origin stable
+    && git merge main
+    && git push origin stable
+    && git checkout main
+    """
 
 [dependencies]
 python = ">=3.9,<3.13"
 cyclopts = "*"
+uv = "*"
 
 [pypi-dependencies]
 genoray-cli = { path = ".", editable = true }
