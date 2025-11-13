@@ -71,10 +71,12 @@ def write(
             raise ValueError(
                 "Dosages must be provided as a string for a VCF FORMAT field if the source is a VCF."
             )
+
         if dosages is not None and Path(dosages).exists():
             raise ValueError(
                 "The `dosages` argument appears to be a path to an existing file, but VCF requires a FORMAT field name."
             )
+
         vcf = VCF(source, dosage_field=dosages)
         SparseVar.from_vcf(out, vcf, max_mem, overwrite, with_dosages=with_dosages)
     elif file_type == "pgen":
