@@ -1,8 +1,9 @@
 #! /usr/bin/env python
 
+from __future__ import annotations
+
 from importlib.metadata import version
 from pathlib import Path
-from typing import Optional, Union
 
 from cyclopts import App
 
@@ -36,42 +37,53 @@ def write(
     out: Path,
     max_mem: str = "1g",
     overwrite: bool = False,
-    dosages: Optional[Union[bool, Path]] = None,
+    dosages: bool | str | None = None,
 ) -> None:
     """
     Convert a VCF or PGEN file to a SVAR file.
 
     Parameters
     ----------
-    source : Path
+    source
         Path to the input VCF or PGEN file.
-    out : Path
+    out
         Path to the output SVAR file.
-    max_mem : str, optional
+    max_mem
         Maximum memory to use for conversion e.g. 1g, 250 MB, etc.
-    overwrite : bool, optional
+    overwrite
         Whether to overwrite the output file if it exists.
-    dosages : bool | Path | None, optional
+    dosages
         Whether to write dosages. If :code:`source` is a PGEN, this must be a path to a PGEN of dosages.
-        If :code:`source` is a VCF, this should be a boolean.
+        If :code:`source` is a VCF, this must be the name of the FORMAT field to use for dosages.
     """
     from genoray import PGEN, VCF, SparseVar
     from genoray._utils import variant_file_type
 
     file_type = variant_file_type(source)
+
+    if dosages is None:
+        with_dosages = False
+    else:
+        with_dosages = True
+
     if file_type == "vcf":
-        vcf = VCF(source)
-        SparseVar.from_vcf(out, vcf, max_mem, overwrite, with_dosages=dosages)
+        if isinstance(dosages, bool):
+            raise ValueError(
+                "Dosages must be provided as a string for a VCF FORMAT field if the source is a VCF."
+            )
+        if dosages is not None and Path(dosages).exists():
+            raise ValueError(
+                "The `dosages` argument appears to be a path to an existing file, but VCF requires a FORMAT field name."
+            )
+        vcf = VCF(source, dosage_field=dosages)
+        SparseVar.from_vcf(out, vcf, max_mem, overwrite, with_dosages=with_dosages)
     elif file_type == "pgen":
         if dosages is False:
             dosages = None
-            with_dosages = False
         elif dosages is True:
             raise ValueError(
                 "Dosages must be provided as a path to a PGEN if source is a PGEN."
             )
-        else:
-            with_dosages = True
 
         pgen = PGEN(source, dosage_path=dosages)
         SparseVar.from_pgen(out, pgen, max_mem, overwrite, with_dosages=with_dosages)
