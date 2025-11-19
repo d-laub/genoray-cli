@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from importlib.metadata import version
 from pathlib import Path
+from typing import Union
 
 from cyclopts import App
 
@@ -37,7 +38,7 @@ def write(
     out: Path,
     max_mem: str = "1g",
     overwrite: bool = False,
-    dosages: bool | str | None = None,
+    dosages: Union[str, None] = None,
 ) -> None:
     """
     Convert a VCF or PGEN file to a SVAR file.
@@ -53,8 +54,10 @@ def write(
     overwrite
         Whether to overwrite the output file if it exists.
     dosages
-        Whether to write dosages. If :code:`source` is a PGEN, this must be a path to a PGEN of dosages.
-        If :code:`source` is a VCF, this must be the name of the FORMAT field to use for dosages.
+        Whether to write dosages.
+        If `source` is a PGEN, this must be a path to a PGEN of dosages.
+        If `source` is a VCF, this must be the name of the FORMAT field to use for dosages.
+        If not provided, dosages will not be written.
     """
     from genoray import PGEN, VCF, SparseVar
     from genoray._utils import variant_file_type
@@ -67,11 +70,6 @@ def write(
         with_dosages = True
 
     if file_type == "vcf":
-        if isinstance(dosages, bool):
-            raise ValueError(
-                "Dosages must be provided as a string for a VCF FORMAT field if the source is a VCF."
-            )
-
         if dosages is not None and Path(dosages).exists():
             raise ValueError(
                 "The `dosages` argument appears to be a path to an existing file, but VCF requires a FORMAT field name."
@@ -80,13 +78,6 @@ def write(
         vcf = VCF(source, dosage_field=dosages)
         SparseVar.from_vcf(out, vcf, max_mem, overwrite, with_dosages=with_dosages)
     elif file_type == "pgen":
-        if dosages is False:
-            dosages = None
-        elif dosages is True:
-            raise ValueError(
-                "Dosages must be provided as a path to a PGEN if source is a PGEN."
-            )
-
         pgen = PGEN(source, dosage_path=dosages)
         SparseVar.from_pgen(out, pgen, max_mem, overwrite, with_dosages=with_dosages)
     else:
