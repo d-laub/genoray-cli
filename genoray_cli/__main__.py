@@ -19,7 +19,8 @@ app = App(
 @app.command
 def index(source: Path):
     """Create a genoray index for a VCF or PGEN file."""
-    from genoray import PGEN, VCF
+    from genoray import VCF
+    from genoray._pgen import _write_index
     from genoray._utils import variant_file_type
 
     file_type = variant_file_type(source)
@@ -27,7 +28,16 @@ def index(source: Path):
         vcf = VCF(source)
         vcf._write_gvi_index()
     elif file_type == "pgen":
-        _ = PGEN(source)
+        index = source.with_suffix(".pvar")
+
+        if not index.exists():
+            index = source.with_suffix(".pvar.zst")
+
+        if not index.exists():
+            raise FileNotFoundError("No index file found.")
+
+        index = index.with_suffix(f"{index.suffix}.gvi")
+        _write_index(index)
     else:
         raise ValueError(f"Unsupported file type: {source}")
 
@@ -39,6 +49,7 @@ def write(
     max_mem: str = "1g",
     overwrite: bool = False,
     dosages: Union[str, None] = None,
+    threads: int | None = None,
 ) -> None:
     """
     Convert a VCF or PGEN file to a SVAR file.
@@ -58,6 +69,8 @@ def write(
         If `source` is a PGEN, this must be a path to a PGEN of dosages.
         If `source` is a VCF, this must be the name of the FORMAT field to use for dosages.
         If not provided, dosages will not be written.
+    threads
+        Number of threads to use for conversion. Defaults to the number of available CPU cores.
     """
     from genoray import PGEN, VCF, SparseVar
     from genoray._utils import variant_file_type
@@ -69,6 +82,9 @@ def write(
     else:
         with_dosages = True
 
+    if threads is None:
+        threads = -1
+
     if file_type == "vcf":
         if dosages is not None and Path(dosages).exists():
             raise ValueError(
@@ -76,10 +92,14 @@ def write(
             )
 
         vcf = VCF(source, dosage_field=dosages)
-        SparseVar.from_vcf(out, vcf, max_mem, overwrite, with_dosages=with_dosages)
+        SparseVar.from_vcf(
+            out, vcf, max_mem, overwrite, with_dosages=with_dosages, n_jobs=threads
+        )
     elif file_type == "pgen":
         pgen = PGEN(source, dosage_path=dosages)
-        SparseVar.from_pgen(out, pgen, max_mem, overwrite, with_dosages=with_dosages)
+        SparseVar.from_pgen(
+            out, pgen, max_mem, overwrite, with_dosages=with_dosages, n_jobs=threads
+        )
     else:
         raise ValueError(f"Unsupported file type: {source}")
 
