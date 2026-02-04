@@ -29,7 +29,7 @@ publish = """
 
 [dependencies]
 uv = "*"
-pre-commit = "*"
+prek = "*"
 commitizen = "*"
 
 [pypi-dependencies]
