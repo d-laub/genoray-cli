@@ -20,11 +20,17 @@ def _run(argv: list[str]) -> subprocess.CompletedProcess:
 
 def test_view_single_region_single_sample(tmp_path: Path, tiny_svar: Path):
     out = tmp_path / "view.svar"
-    r = _run([
-        "view", str(tiny_svar), str(out),
-        "-r", "chr1:1-100",
-        "-s", "A",
-    ])
+    r = _run(
+        [
+            "view",
+            str(tiny_svar),
+            str(out),
+            "-r",
+            "chr1:1-100",
+            "-s",
+            "A",
+        ]
+    )
     assert r.returncode == 0, r.stderr
     sub = SparseVar(out)
     assert list(sub.available_samples) == ["A"]
@@ -37,11 +43,17 @@ def test_view_bed_and_sample_file(tmp_path: Path, tiny_svar: Path):
     samples_f = tmp_path / "s.txt"
     samples_f.write_text("A\nB\n")
     out = tmp_path / "view.svar"
-    r = _run([
-        "view", str(tiny_svar), str(out),
-        "-R", str(bed),
-        "-S", str(samples_f),
-    ])
+    r = _run(
+        [
+            "view",
+            str(tiny_svar),
+            str(out),
+            "-R",
+            str(bed),
+            "-S",
+            str(samples_f),
+        ]
+    )
     assert r.returncode == 0, r.stderr
     sub = SparseVar(out)
     assert sorted(sub.available_samples) == ["A", "B"]
@@ -49,11 +61,17 @@ def test_view_bed_and_sample_file(tmp_path: Path, tiny_svar: Path):
 
 def test_view_regions_comma_list(tmp_path: Path, tiny_svar: Path):
     out = tmp_path / "view.svar"
-    r = _run([
-        "view", str(tiny_svar), str(out),
-        "-r", "chr1:1-15,chr1:25-35",
-        "-s", "A,B,C",
-    ])
+    r = _run(
+        [
+            "view",
+            str(tiny_svar),
+            str(out),
+            "-r",
+            "chr1:1-15,chr1:25-35",
+            "-s",
+            "A,B,C",
+        ]
+    )
     assert r.returncode == 0, r.stderr
     sub = SparseVar(out)
     # genoray's .index stores POS as 1-based (matches the source VCF POS),
@@ -75,10 +93,15 @@ def test_view_no_args_errors(tmp_path: Path, tiny_svar: Path):
 
 def test_view_regions_only_uses_all_samples(tmp_path: Path, tiny_svar: Path):
     out = tmp_path / "view.svar"
-    r = _run([
-        "view", str(tiny_svar), str(out),
-        "-r", "chr1:1-100",
-    ])
+    r = _run(
+        [
+            "view",
+            str(tiny_svar),
+            str(out),
+            "-r",
+            "chr1:1-100",
+        ]
+    )
     assert r.returncode == 0, r.stderr
     sub = SparseVar(out)
     src = SparseVar(tiny_svar)
@@ -88,10 +111,15 @@ def test_view_regions_only_uses_all_samples(tmp_path: Path, tiny_svar: Path):
 
 def test_view_samples_only_uses_all_variants(tmp_path: Path, tiny_svar: Path):
     out = tmp_path / "view.svar"
-    r = _run([
-        "view", str(tiny_svar), str(out),
-        "-s", "A,B,C",
-    ])
+    r = _run(
+        [
+            "view",
+            str(tiny_svar),
+            str(out),
+            "-s",
+            "A,B,C",
+        ]
+    )
     assert r.returncode == 0, r.stderr
     sub = SparseVar(out)
     src = SparseVar(tiny_svar)

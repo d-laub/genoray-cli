@@ -1,4 +1,5 @@
 """Shared fixtures for genoray-cli tests."""
+
 from __future__ import annotations
 
 import subprocess
@@ -15,12 +16,12 @@ def tiny_vcf(tmp_path_factory: pytest.TempPathFactory) -> Path:
     plain.write_text(
         "##fileformat=VCFv4.2\n"
         "##contig=<ID=chr1>\n"
-        "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tA\tB\tC\n"
-        "chr1\t10\t.\tA\tT\t.\t.\t.\tGT\t0/1\t0/0\t0/0\n"   # singleton in A
-        "chr1\t20\t.\tC\tG\t.\t.\t.\tGT\t0/0\t0/1\t1/1\n"   # in B and C
-        "chr1\t30\t.\tG\tA\t.\t.\t.\tGT\t0/0\t0/0\t1/0\n"   # singleton in C
-        "chr1\t40\t.\tT\tC\t.\t.\t.\tGT\t1/0\t0/0\t0/0\n"   # singleton in A
+        "chr1\t10\t.\tA\tT\t.\t.\t.\tGT\t0/1\t0/0\t0/0\n"  # singleton in A
+        "chr1\t20\t.\tC\tG\t.\t.\t.\tGT\t0/0\t0/1\t1/1\n"  # in B and C
+        "chr1\t30\t.\tG\tA\t.\t.\t.\tGT\t0/0\t0/0\t1/0\n"  # singleton in C
+        "chr1\t40\t.\tT\tC\t.\t.\t.\tGT\t1/0\t0/0\t0/0\n"  # singleton in A
     )
     gz = d / "tiny.vcf.gz"
     with open(gz, "wb") as out:

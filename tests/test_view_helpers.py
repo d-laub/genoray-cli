@@ -24,5 +24,3 @@ def test_parse_regions_arg_comma_list():
 def test_parse_regions_arg_bad_format():
     with pytest.raises(ValueError, match="region"):
         parse_regions_arg("not_a_region")
-
-

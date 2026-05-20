@@ -1,4 +1,5 @@
 """Helpers for the `genoray view` subcommand."""
+
 from __future__ import annotations
 
 import re
