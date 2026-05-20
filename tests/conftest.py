@@ -1,6 +1,7 @@
 """Shared fixtures for genoray-cli tests."""
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -8,9 +9,10 @@ import pytest
 
 @pytest.fixture(scope="session")
 def tiny_vcf(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    """A tiny inline VCF with 3 samples × 4 variants on chr1."""
-    p = tmp_path_factory.mktemp("vcf") / "tiny.vcf"
-    p.write_text(
+    """A tiny bgzipped+indexed VCF with 3 samples × 4 variants on chr1."""
+    d = tmp_path_factory.mktemp("vcf")
+    plain = d / "tiny.vcf"
+    plain.write_text(
         "##fileformat=VCFv4.2\n"
         "##contig=<ID=chr1>\n"
         "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
@@ -20,7 +22,11 @@ def tiny_vcf(tmp_path_factory: pytest.TempPathFactory) -> Path:
         "chr1\t30\t.\tG\tA\t.\t.\t.\tGT\t0/0\t0/0\t1/0\n"   # singleton in C
         "chr1\t40\t.\tT\tC\t.\t.\t.\tGT\t1/0\t0/0\t0/0\n"   # singleton in A
     )
-    return p
+    gz = d / "tiny.vcf.gz"
+    with open(gz, "wb") as out:
+        subprocess.run(["bgzip", "-c", str(plain)], check=True, stdout=out)
+    subprocess.run(["bcftools", "index", str(gz)], check=True)
+    return gz
 
 
 @pytest.fixture(scope="session")
