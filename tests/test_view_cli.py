@@ -63,3 +63,35 @@ def test_view_regions_comma_list(tmp_path: Path, tiny_svar: Path):
     assert 10 in positions
     assert 30 in positions
     assert 20 not in positions
+
+
+def test_view_no_args_errors(tmp_path: Path, tiny_svar: Path):
+    out = tmp_path / "view.svar"
+    r = _run(["view", str(tiny_svar), str(out)])
+    assert r.returncode != 0
+    assert "at least one of" in (r.stderr + r.stdout).lower()
+
+
+def test_view_regions_only_uses_all_samples(tmp_path: Path, tiny_svar: Path):
+    out = tmp_path / "view.svar"
+    r = _run([
+        "view", str(tiny_svar), str(out),
+        "-r", "chr1:1-100",
+    ])
+    assert r.returncode == 0, r.stderr
+    sub = SparseVar(out)
+    src = SparseVar(tiny_svar)
+    assert sorted(sub.available_samples) == sorted(src.available_samples)
+
+
+def test_view_samples_only_uses_all_variants(tmp_path: Path, tiny_svar: Path):
+    out = tmp_path / "view.svar"
+    r = _run([
+        "view", str(tiny_svar), str(out),
+        "-s", "A,B,C",
+    ])
+    assert r.returncode == 0, r.stderr
+    sub = SparseVar(out)
+    src = SparseVar(tiny_svar)
+    # All variants kept since all samples kept.
+    assert sub.n_variants == src.n_variants
