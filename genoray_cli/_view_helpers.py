@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import re
-from typing import Any
 
 import polars as pl
 
@@ -32,15 +31,3 @@ def parse_regions_arg(s: str) -> pl.DataFrame:
         {"chrom": chroms, "start": starts, "end": ends},
         schema={"chrom": pl.Utf8, "start": pl.Int32, "end": pl.Int32},
     )
-
-
-def require_exactly_one(name: str, **kwargs: Any) -> None:
-    """Raise ValueError unless exactly one of the keyword values is non-None.
-
-    Used to enforce bcftools-style flag-pair mutual exclusion, e.g.
-    ``require_exactly_one("regions", regions=..., regions_file=...)``.
-    """
-    set_keys = [k for k, v in kwargs.items() if v is not None]
-    if len(set_keys) != 1:
-        flags = " / ".join(f"--{k.replace('_', '-')}" for k in kwargs)
-        raise ValueError(f"exactly one of {flags} is required for {name}")

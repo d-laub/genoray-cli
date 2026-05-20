@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 import polars as pl
 
-from genoray_cli._view_helpers import parse_regions_arg, require_exactly_one
+from genoray_cli._view_helpers import parse_regions_arg
 
 
 def test_parse_regions_arg_single():
@@ -26,16 +26,3 @@ def test_parse_regions_arg_bad_format():
         parse_regions_arg("not_a_region")
 
 
-def test_require_exactly_one_zero():
-    with pytest.raises(ValueError, match="exactly one of"):
-        require_exactly_one("regions", a=None, b=None)
-
-
-def test_require_exactly_one_both():
-    with pytest.raises(ValueError, match="exactly one of"):
-        require_exactly_one("regions", a="x", b="y")
-
-
-def test_require_exactly_one_ok():
-    require_exactly_one("regions", a="x", b=None)  # no raise
-    require_exactly_one("regions", a=None, b="y")  # no raise

@@ -133,7 +133,7 @@ def view(
     import polars as pl
     from genoray import SparseVar
 
-    from ._view_helpers import parse_regions_arg, require_exactly_one
+    from ._view_helpers import parse_regions_arg
 
     # No-op guard
     if (
@@ -146,35 +146,35 @@ def view(
             "at least one of --regions/--regions-file or --samples/--samples-file is required"
         )
 
-    # Mutex within each pair (only check when both are set)
+    # Mutex within each pair
     if regions is not None and regions_file is not None:
-        require_exactly_one("regions", regions=regions, regions_file=regions_file)
+        raise ValueError("--regions and --regions-file are mutually exclusive")
     if samples is not None and samples_file is not None:
-        require_exactly_one("samples", samples=samples, samples_file=samples_file)
+        raise ValueError("--samples and --samples-file are mutually exclusive")
 
     sv = SparseVar(source)
 
     # Resolve regions arg
     if regions is not None:
-        regions_arg: object = parse_regions_arg(regions)
+        regions_arg: "pl.DataFrame | Path" = parse_regions_arg(regions)
     elif regions_file is not None:
         regions_arg = regions_file
     else:
         # "all variants" — one row per contig spanning [0, max_pos+1)
+        # Synthesize one row per contig covering [0, max(POS)+1)
         bounds = (
             sv.index.group_by("CHROM", maintain_order=True)
-            .agg(start=pl.lit(0), end=pl.col("POS").max() + 1)
-            .rename({"CHROM": "chrom"})
-            .with_columns(
-                pl.col("start").cast(pl.Int32),
-                pl.col("end").cast(pl.Int32),
+            .agg(
+                start=pl.lit(0, dtype=pl.Int32),
+                end=(pl.col("POS").max() + 1).cast(pl.Int32),
             )
+            .rename({"CHROM": "chrom"})
         )
         regions_arg = bounds.select("chrom", "start", "end")
 
     # Resolve samples arg
     if samples is not None:
-        samples_arg: object = [s for s in samples.split(",") if s]
+        samples_arg: "list[str] | Path" = [s for s in samples.split(",") if s]
     elif samples_file is not None:
         samples_arg = samples_file
     else:
