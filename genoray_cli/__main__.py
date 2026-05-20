@@ -129,6 +129,39 @@ def view(
 
     At least one of --regions/--regions-file or --samples/--samples-file is
     required. The omitted side defaults to "all" (all samples or all variants).
+
+    Parameters
+    ----------
+    source
+        Path to the input SVAR directory.
+    out
+        Path to the output SVAR directory.
+    regions
+        Inline region(s): a single ``chrom:start-end`` (1-based inclusive, bcftools
+        convention) or a comma-separated list, e.g. ``chr1:1-100,chr2:200-300``.
+        Mutually exclusive with --regions-file.
+    regions_file
+        Path to a BED file (0-based half-open) of regions. Mutually exclusive
+        with --regions.
+    samples
+        Comma-separated list of sample names to keep, e.g. ``A,B,C``. Mutually
+        exclusive with --samples-file.
+    samples_file
+        Path to a file of sample names (one per line). Mutually exclusive with
+        --samples.
+    fields
+        Optional FORMAT fields to carry over (e.g. ``-f GT -f GQ``). Defaults to
+        all available fields. Use ``--empty-fields`` to carry over none.
+    merge_overlapping
+        If set, silently merge overlapping regions instead of raising.
+    regions_overlap
+        How variants are matched to regions: ``pos`` (default; match if the
+        variant POS falls in the range), ``record`` (match by VCF record extent),
+        or ``variant`` (match by full variant extent including ILEN).
+    overwrite
+        Overwrite the output directory if it already exists.
+    threads
+        Number of threads. Defaults to all available CPUs.
     """
     import polars as pl
     from genoray import SparseVar

@@ -63,6 +63,7 @@ def test_view_regions_comma_list(tmp_path: Path, tiny_svar: Path):
     assert 10 in positions
     assert 30 in positions
     assert 20 not in positions
+    assert 40 not in positions  # outside both ranges
 
 
 def test_view_no_args_errors(tmp_path: Path, tiny_svar: Path):
@@ -82,6 +83,7 @@ def test_view_regions_only_uses_all_samples(tmp_path: Path, tiny_svar: Path):
     sub = SparseVar(out)
     src = SparseVar(tiny_svar)
     assert sorted(sub.available_samples) == sorted(src.available_samples)
+    assert sub.n_variants == src.n_variants  # all variants kept since region covers all
 
 
 def test_view_samples_only_uses_all_variants(tmp_path: Path, tiny_svar: Path):
@@ -95,3 +97,4 @@ def test_view_samples_only_uses_all_variants(tmp_path: Path, tiny_svar: Path):
     src = SparseVar(tiny_svar)
     # All variants kept since all samples kept.
     assert sub.n_variants == src.n_variants
+    assert sorted(sub.available_samples) == sorted(src.available_samples)
