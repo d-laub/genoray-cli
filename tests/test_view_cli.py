@@ -45,3 +45,21 @@ def test_view_bed_and_sample_file(tmp_path: Path, tiny_svar: Path):
     assert r.returncode == 0, r.stderr
     sub = SparseVar(out)
     assert sorted(sub.available_samples) == ["A", "B"]
+
+
+def test_view_regions_comma_list(tmp_path: Path, tiny_svar: Path):
+    out = tmp_path / "view.svar"
+    r = _run([
+        "view", str(tiny_svar), str(out),
+        "-r", "chr1:1-15,chr1:25-35",
+        "-s", "A,B,C",
+    ])
+    assert r.returncode == 0, r.stderr
+    sub = SparseVar(out)
+    # genoray's .index stores POS as 1-based (matches the source VCF POS),
+    # so VCF POS=10/20/30/40 appear unchanged in sub.index["POS"].
+    # POS 10 falls in 1-15, POS 30 in 25-35, POS 20 outside both, POS 40 outside both.
+    positions = sub.index["POS"].to_list()
+    assert 10 in positions
+    assert 30 in positions
+    assert 20 not in positions
