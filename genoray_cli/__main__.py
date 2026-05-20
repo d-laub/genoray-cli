@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from importlib.metadata import version
 from pathlib import Path
-from typing import Union
+from typing import Annotated, Literal, Union
 
-from cyclopts import App
+from cyclopts import App, Parameter
 
 app = App(
     help_on_error=True,
@@ -102,6 +102,94 @@ def write(
         )
     else:
         raise ValueError(f"Unsupported file type: {source}")
+
+
+@app.command
+def view(
+    source: Path,
+    out: Path,
+    *,
+    regions: Annotated[Union[str, None], Parameter(name=["--regions", "-r"])] = None,
+    regions_file: Annotated[
+        Union[Path, None], Parameter(name=["--regions-file", "-R"])
+    ] = None,
+    samples: Annotated[Union[str, None], Parameter(name=["--samples", "-s"])] = None,
+    samples_file: Annotated[
+        Union[Path, None], Parameter(name=["--samples-file", "-S"])
+    ] = None,
+    fields: Annotated[
+        Union[list[str], None], Parameter(name=["--fields", "-f"])
+    ] = None,
+    merge_overlapping: bool = False,
+    regions_overlap: Literal["pos", "record", "variant"] = "pos",
+    overwrite: bool = False,
+    threads: Annotated[Union[int, None], Parameter(name=["--threads", "-@"])] = None,
+) -> None:
+    """Write a subset of an SVAR to a new SVAR directory.
+
+    At least one of --regions/--regions-file or --samples/--samples-file is
+    required. The omitted side defaults to "all" (all samples or all variants).
+    """
+    import polars as pl
+    from genoray import SparseVar
+
+    from ._view_helpers import parse_regions_arg, require_exactly_one
+
+    # No-op guard
+    if (
+        regions is None
+        and regions_file is None
+        and samples is None
+        and samples_file is None
+    ):
+        raise ValueError(
+            "at least one of --regions/--regions-file or --samples/--samples-file is required"
+        )
+
+    # Mutex within each pair (only check when both are set)
+    if regions is not None and regions_file is not None:
+        require_exactly_one("regions", regions=regions, regions_file=regions_file)
+    if samples is not None and samples_file is not None:
+        require_exactly_one("samples", samples=samples, samples_file=samples_file)
+
+    sv = SparseVar(source)
+
+    # Resolve regions arg
+    if regions is not None:
+        regions_arg: object = parse_regions_arg(regions)
+    elif regions_file is not None:
+        regions_arg = regions_file
+    else:
+        # "all variants" — one row per contig spanning [0, max_pos+1)
+        bounds = (
+            sv.index.group_by("CHROM", maintain_order=True)
+            .agg(start=pl.lit(0), end=pl.col("POS").max() + 1)
+            .rename({"CHROM": "chrom"})
+            .with_columns(
+                pl.col("start").cast(pl.Int32),
+                pl.col("end").cast(pl.Int32),
+            )
+        )
+        regions_arg = bounds.select("chrom", "start", "end")
+
+    # Resolve samples arg
+    if samples is not None:
+        samples_arg: object = [s for s in samples.split(",") if s]
+    elif samples_file is not None:
+        samples_arg = samples_file
+    else:
+        samples_arg = list(sv.available_samples)
+
+    sv.write_view(
+        regions=regions_arg,
+        samples=samples_arg,
+        output=out,
+        fields=fields,
+        merge_overlapping=merge_overlapping,
+        regions_overlap=regions_overlap,
+        overwrite=overwrite,
+        threads=threads,
+    )
 
 
 if __name__ == "__main__":
