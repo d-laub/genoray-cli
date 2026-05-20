@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-import polars as pl
 
 from genoray_cli._view_helpers import parse_regions_arg
 
